@@ -21,23 +21,21 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # vvvvvv 这里是唯一的修改点 vvvvvv
     - name: Setup MSVC environment
       if: runner.os == 'Windows'
-      uses: ilammy/msvc-dev-cmd@v1 
-    # ^^^^^^ 这里是唯一的修改点 ^^^^^^
+      uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Compile C++ code
-      shell: bash
-      run: |
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          cl /EHsc /std:c++20 /O2 /Fe:sieve_experiment.exe sieve_experiment.cpp
-        else
-          g++ -std=c++20 -O3 -o sieve_experiment sieve_experiment.cpp -pthread
-        fi
+    - name: Compile on Windows
+      if: runner.os == 'Windows'
+      run: cl /EHsc /std:c++20 /O2 /Fe:sieve_experiment.exe sieve_experiment.cpp
+
+    - name: Compile on Linux/macOS
+      if: runner.os != 'Windows'
+      run: g++ -std=c++20 -O3 -o sieve_experiment sieve_experiment.cpp -pthread
 
     - name: Run benchmark
-      shell: bash
+      # 这个步骤可以继续安全地使用 bash，因为它的逻辑是用 bash 编写的
+      shell: bash 
       run: |
         EXECUTABLE="./sieve_experiment"
         if [ "${{ runner.os }}" == "Windows" ]; then
@@ -48,15 +46,15 @@ jobs:
 
         for version in mutex spinlock atomic unsafe; do
           for threads in 1 2 4; do
-            echo "Running ${version} with ${threads} threads on ${{ matrix.os }}..."
+            echo "Running ${version} with ${threads} threads on ${{ runner.os }}..."
             output=$($EXECUTABLE $threads $version)
             time=$(echo "$output" | grep 'Execution time:' | awk '{print $3}')
             
-            echo "${{ matrix.os }},${version},${threads},${time}" >> results.csv
+            echo "${{ runner.os }},${version},${threads},${time}" >> results.csv
           done
         done
 
-        echo "Benchmark results on ${{ matrix.os }}:"
+        echo "Benchmark results on ${{ runner.os }}:"
         cat results.csv
 
     - name: Upload results artifact
