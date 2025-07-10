@@ -21,9 +21,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # vvvvvv 这里是唯一的修改点 vvvvvv
     - name: Setup MSVC environment
       if: runner.os == 'Windows'
-      uses: microsoft/setup-msvc-dev@v2
+      uses: ilammy/msvc-dev-cmd@v1 
+    # ^^^^^^ 这里是唯一的修改点 ^^^^^^
 
     - name: Compile C++ code
       shell: bash
