@@ -26,7 +26,7 @@
 version：
 
 - `mutex`
-- `spinlock`-
+- `spinlock`
 - `atomic`
 - `unsafe`
 
