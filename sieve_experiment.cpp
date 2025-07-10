@@ -6,6 +6,7 @@
 #include <chrono>
 #include <string>
 #include <numeric>
+#include <memory>
 
 // --- 常量定义，与论文保持一致 ---
 constexpr int SIEVE_LIMIT = 100'000'000;
@@ -40,7 +41,7 @@ public:
         
         auto start_time = std::chrono::high_resolution_clock::now();
 
-        std::vector<std::jthread> threads;
+        std::vector<std::thread> threads; // <<-- 修改点1：使用 std::thread
         threads.reserve(num_threads);
 
         // 将2到PRIME_LIMIT的数字范围分配给各个线程
@@ -50,7 +51,13 @@ public:
             int end_prime = (i == num_threads - 1) ? PRIME_LIMIT : start_prime + range_per_thread;
             threads.emplace_back(&Sieve::run_thread, this, start_prime, end_prime);
         }
-        // jthread会自动在析构时join，无需手动操作
+
+        // <<-- 修改点2：手动等待所有线程完成
+        for (auto& t : threads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
 
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end_time - start_time;
